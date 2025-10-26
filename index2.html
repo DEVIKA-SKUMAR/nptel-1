@@ -731,3 +731,172 @@
         {id: 15, question: "Nyquist Plot in EIS represents:", options: ["Absorbance vs. wavelength", "Band gap vs. frequency", "Capacitance vs. time", "Imaginary vs. real part of impedance"], correct: 3, explanation: "Nyquist plots show the imaginary vs. real part of impedance in EIS."}
     ]
 };
+ questionBank.fullCourse = [
+            ...questionBank.week1,
+            ...questionBank.week2,
+            ...questionBank.week3,
+            ...questionBank.week4,
+            ...questionBank.week5,
+            ...questionBank.week6,
+            ...questionBank.week7,
+            ...questionBank.week8
+        ];
+
+        const weeks = [
+            { id: 'week1', name: 'Week 1: Fundamentals & Solar Energy', count: 15 },
+            { id: 'week2', name: 'Week 2: Semiconductors & PV Technology', count: 15 },
+            { id: 'week3', name: 'Week 3: Fluid Mechanics & Wind Energy', count: 15 },
+            { id: 'week4', name: 'Week 4: Waves & Hydroelectric Power', count: 15 },
+            { id: 'week5', name: 'Week 5: Energy Storage Systems', count: 15 },
+            { id: 'week6', name: 'Week 6: Battery Technology', count: 15 },
+            { id: 'week7', name: 'Week 7: Supercapacitors', count: 15 },
+            { id: 'week8', name: 'Week 8: Characterization Techniques', count: 15 },
+            { id: 'fullCourse', name: 'Full Course Test', count: 120 }
+        ];
+
+        let currentWeek = null;
+        let currentQuestionIndex = 0;
+        let selectedAnswers = {};
+        let quizCompleted = false;
+        let showingExplanation = false;
+
+        // Initialize
+        function init() {
+            renderWeeks();
+        }
+
+        function renderWeeks() {
+            const container = document.getElementById('weeks-container');
+            container.innerHTML = weeks.map(week => `
+                <div class="week-card" onclick="startQuiz('${week.id}')">
+                    <h3>${week.name}</h3>
+                    <p>${week.count} Questions</p>
+                    <button>Start Quiz</button>
+                </div>
+            `).join('');
+        }
+
+        function startQuiz(weekId) {
+            currentWeek = weekId;
+            currentQuestionIndex = 0;
+            selectedAnswers = {};
+            quizCompleted = false;
+            showingExplanation = false;
+
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('quiz-view').style.display = 'block';
+
+            const weekInfo = weeks.find(w => w.id === weekId);
+            document.getElementById('quiz-title').textContent = weekInfo.name;
+
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const questions = questionBank[currentWeek];
+            const question = questions[currentQuestionIndex];
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+
+            document.getElementById('progress').style.width = progress + '%';
+            document.getElementById('question-counter').textContent = 
+                `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+            document.getElementById('question-text').textContent = question.question;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = question.options.map((option, index) => {
+                let className = 'option';
+                const isSelected = selectedAnswers[currentQuestionIndex] === index;
+                const isCorrect = index === question.correct;
+
+                if (quizCompleted || showingExplanation) {
+                    if (isCorrect) className += ' correct';
+                    else if (isSelected && !isCorrect) className += ' incorrect';
+                } else if (isSelected) {
+                    className += ' selected';
+                }
+
+                return `<div class="${className}" onclick="selectAnswer(${index})">${option}</div>`;
+            }).join('');
+
+            document.getElementById('explanation').textContent = question.explanation;
+            document.getElementById('explanation').classList.toggle('show', showingExplanation);
+
+            // Update buttons
+            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+            document.getElementById('explain-btn').style.display = 
+                !quizCompleted && selectedAnswers[currentQuestionIndex] !== undefined ? 'block' : 'none';
+            document.getElementById('next-btn').style.display = 
+                currentQuestionIndex < questions.length - 1 ? 'block' : 'none';
+            document.getElementById('submit-btn').style.display = 
+                currentQuestionIndex === questions.length - 1 && !quizCompleted ? 'block' : 'none';
+        }
+
+        function selectAnswer(index) {
+            if (quizCompleted) return;
+            selectedAnswers[currentQuestionIndex] = index;
+            renderQuestion();
+        }
+
+        function toggleExplanation() {
+            showingExplanation = !showingExplanation;
+            document.getElementById('explain-btn').textContent = 
+                showingExplanation ? 'Hide Answer' : 'Show Answer';
+            renderQuestion();
+        }
+
+        function nextQuestion() {
+            const questions = questionBank[currentWeek];
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                showingExplanation = false;
+                renderQuestion();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showingExplanation = false;
+                renderQuestion();
+            }
+        }
+
+        function submitQuiz() {
+            const questions = questionBank[currentWeek];
+            let score = 0;
+
+            questions.forEach((question, index) => {
+                if (selectedAnswers[index] === question.correct) {
+                    score++;
+                }
+            });
+
+            quizCompleted = true;
+            showingExplanation = true;
+            renderQuestion();
+
+            const percentage = Math.round((score / questions.length) * 100);
+            document.getElementById('final-score').textContent = `${score} / ${questions.length}`;
+            document.getElementById('percentage').textContent = `You scored ${percentage}%`;
+            document.getElementById('results-modal').classList.add('show');
+        }
+
+        function retakeQuiz() {
+            document.getElementById('results-modal').classList.remove('show');
+            currentQuestionIndex = 0;
+            selectedAnswers = {};
+            quizCompleted = false;
+            showingExplanation = false;
+            renderQuestion();
+        }
+
+        function goHome() {
+            document.getElementById('results-modal').classList.remove('show');
+            document.getElementById('home-view').classList.remove('hidden');
+            document.getElementById('quiz-view').style.display = 'none';
+        }
+
+        init();
+    </script>
+</body>
+</html>
